@@ -1,6 +1,5 @@
-use std::ffi::c_void;
 use std::fs::File;
-use std::io::{BufReader, Read, Seek, SeekFrom};
+use std::io::{BufReader, Error, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 use crate::nx_file::NXNodeType::{AUDIO, BITMAP, DOUBLE, INT64, NONE, STRING, VECTOR};
@@ -50,21 +49,31 @@ struct NXAudioData {
 
 struct NXStringData {
     id: u32,
-    as_string: std::string
+    as_string: str
 }
 
-struct NXNode {
-    name: u32, // String ID
+struct NXBitmapImg {
+    length: u32,
+    data: Vec<u8>
+}
+
+pub struct NXNode<'a> {
+    file_data: &'a NXFileData,
+    name_id: u32, // String ID
+    name: String,
     child: u32, // Node ID of first child
     n_child: u16, // amount of child
     ntype: NXNodeType,
     data: [u8; 8],
 }
 
-impl NXNode {
+impl NXNode<'_> {
     fn get_string(&self) -> &str {
         // TODO find on table
-        std::str::from_utf8(&self.data[0..4])?
+        let string_id = LittleEndian::read_u32(&self.data);
+
+
+        return "";
     }
     fn get_bitmap(&self) -> NXBitmapData {
         NXBitmapData {
@@ -80,22 +89,16 @@ impl NXNode {
         }
     }
 
+    fn get_vector(&self) -> NXVectorData {
+        NXVectorData {
+            x: LittleEndian::read_i32(&self.data[0..4]),
+            y: LittleEndian::read_i32(&self.data[4..]),
+        }
+    }
+
 }
 
-
-struct NXTables {
-    bitmapData: Vec<NXBitmapData>,
-    audioData: Vec<NXAudioData>,
-    stringData: Vec<NXStringData>,
-    header: NXFileHeader
-}
-
-struct NXFileData {
-    base: c_void,
-    node_table: NXTables,
-}
-
-struct NXFileHeader {
+pub struct NXFileHeader {
     magic : u32,
     node_count: u32,
     node_offset: u64,
@@ -107,28 +110,36 @@ struct NXFileHeader {
     audio_offset: u64,
 }
 
-
-struct NXFile {
-    file_path: PathBuf,
-    file_reader: BufReader<File>,
+pub struct NXFileData {
     header: NXFileHeader,
-    data: NXFileData,
+    strings : Vec<String>,
+    audios: Vec<NXAudioData>,
+    bitmaps: Vec<NXBitmapData>,
 }
 
-impl NXFile {
-    pub fn new(file_path: std::string) -> Self {
-        let file_path = PathBuf::from(file_path);
-        let file = File::open(&Self.file_path);
+pub struct NXFile<'a> {
+    file_path: PathBuf,
+    freader: BufReader<File>,
+    file_data: NXFileData,
+    nodes : Vec<NXNode<'a>>,
+}
 
-        let mut file_reader : BufReader<File> = BufReader::new(&file)?;
+impl<'a> NXFile<'a> {
+    pub fn new(file_path: &str) -> Result<Self, Error> {
+        let file_path_buf = PathBuf::from(file_path);
+        let file = File::open(file_path_buf)?;
+
+        let mut file_reader : BufReader<File> = BufReader::new(file);
 
         // Check magic bytes
         let mut magic_bytes_arr: [u8;4] = [0,0,0,0];
         file_reader.read_exact(&mut magic_bytes_arr)?;
-        let magic_bytes_arr = file_reader.read_u32::<LittleEndian>()?.to_le_bytes();
+        //let magic_bytes_arr = file_reader.read_u32::<LittleEndian>()?.to_le_bytes();
 
         // Check the magic bytes
-        let str_magic = std::str::from_utf8(&magic_bytes_arr)?;
+        let str_magic = std::str::from_utf8(&magic_bytes_arr).map_err(
+            |e| std::io::Error::new(std::io::ErrorKind::InvalidData, e)
+        )?;
         if !str_magic.eq(MAGIC_BYTES) {
             panic!("Can't open specified file. Not a valid nx file lol");
         }
@@ -155,40 +166,82 @@ impl NXFile {
             audio_offset,
         };
 
+
+        // CREATE THE TABLES
+        // String table
+        file_reader.seek(SeekFrom::Start(string_offset))?;
+        let mut string_table : Vec<String> = vec!["".to_string(); string_count as usize];//Vec::with_capacity(string_count as usize);
+        for curr_str in string_table.iter_mut() {
+            let offset = file_reader.read_u64::<LittleEndian>()?;
+            // MARK HERE
+            let current_offset = file_reader.seek(SeekFrom::Current(0))?;
+            //
+            file_reader.seek(SeekFrom::Start(offset))?;
+            let string_length = file_reader.read_u16::<LittleEndian>()?;
+            let mut string_data: Vec<u8> = vec![0; string_length as usize];
+            file_reader.read_exact(&mut string_data)?;
+
+            let string_utf8 = String::from_utf8(string_data).map_err(
+                |e| std::io::Error::new(std::io::ErrorKind::InvalidData, e)
+            )?;
+
+            *curr_str = string_utf8.to_string();
+
+            // Reset to the beginning of the offset
+            file_reader.seek(SeekFrom::Start(current_offset))?;
+        }
+
+        // TODO:
+        // Bitmap & Audio.
+        // I dont need them atm, but ill probably add it... later... maybe
+        let nx_file_data = NXFileData{
+            header,
+            strings: string_table,
+            audios: vec![],
+            bitmaps: vec![],
+        };
+
+
+        Ok(NXFile{
+            file_path: PathBuf::from(file_path),
+            freader: file_reader,
+            file_data: nx_file_data,
+            nodes: vec![],
+        })
+    }
+
+    // Create the nodes
+    pub fn parse(&mut self) -> Result<Vec<NXNode>, Error>{
         // Create the node array I guess xd
-        file_reader.seek(SeekFrom::Start(0))?;
-        file_reader.seek(SeekFrom::Current(node_offset as i64))?;
-        let mut nodes : Vec<NXNode> = Vec::with_capacity(node_count as usize);
-        for (i, node) in nodes.iter_mut().enumerate() {
+        self.freader.seek(SeekFrom::Start(self.file_data.header.node_offset))?;
+        let mut nodes : Vec<NXNode> = Vec::with_capacity(self.file_data.header.node_count as usize);
+        for i in 0..self.file_data.header.node_count {
             // Name
             //let str_length = file_reader.read_u16::<LittleEndian>()?;
             //let mut node_name_bytes: Vec<u8> = Vec::with_capacity(str_length as usize);
             //file_reader.read_exact(&mut node_name_bytes)?;
             //let node_name = std::str::from_utf8(&node_name_bytes)?;
-            let node_name = file_reader.read_u32::<LittleEndian>()?;
+            let node_name_id = self.freader.read_u32::<LittleEndian>()?;
+            let node_name = self.file_data.strings.get(node_name_id as usize).unwrap_or(&String::new()).clone();
 
             // First Child ID
-            let child = file_reader.read_u32::<LittleEndian>()?;
-            let n_child = file_reader.read_u16::<LittleEndian>()?;
-            let ntype: NXNodeType = file_reader.read_u16::<LittleEndian>()?.into();
+            let child = self.freader.read_u32::<LittleEndian>()?;
+            let n_child = self.freader.read_u16::<LittleEndian>()?;
+            let ntype: NXNodeType = self.freader.read_u16::<LittleEndian>()?.into();
 
             // Create depending on the type.
-            let node_data = file_reader.read_u64::<LittleEndian>()?.to_le_bytes();
-            *node = NXNode{
+            let node_data = self.freader.read_u64::<LittleEndian>()?.to_le_bytes();
+             nodes.push(NXNode{
+                file_data: &self.file_data,
+                name_id: node_name_id,
                 name: node_name,
                 child,
                 n_child,
                 ntype,
                 data: node_data,
-            }
+            });
         }
 
-
-        NXFile{
-            file_path,
-            file_reader,
-            header,
-            data: NXFileData {},
-        }
+        Ok(nodes)
     }
 }
