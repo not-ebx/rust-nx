@@ -8,7 +8,7 @@ use crate::nx_file::NXNodeType::{AUDIO, BITMAP, DOUBLE, INT64, NONE, STRING, VEC
 const MAGIC_BYTES: &str = "PKG4";
 
 #[derive(Clone, Copy)]
-enum NXNodeType {
+pub enum NXNodeType {
     NONE,
     INT64, // 64 bit signed int
     DOUBLE, // 64 bit double
@@ -18,7 +18,6 @@ enum NXNodeType {
     AUDIO //
 }
 
-#[derive(Debug)]
 pub enum NXNodeData {
     String(String),
     Bitmap(NXBitmapData),
@@ -50,8 +49,8 @@ impl From<u16> for NXNodeType {
 
 #[derive(Debug)]
 pub struct NXVectorData {
-    x: i32,
-    y: i32
+    pub x: i32,
+    pub y: i32
 }
 
 impl NXVectorData {
@@ -68,9 +67,9 @@ impl NXVectorData {
 
 #[derive(Debug)]
 pub struct NXBitmapData {
-    id: u32,
-    width: u16,
-    height: u16
+    pub id: u32,
+    pub width: u16,
+    pub height: u16
 }
 
 
@@ -87,8 +86,8 @@ impl NXBitmapData {
 
 #[derive(Debug)]
 pub struct NXAudioData {
-    id: u32,
-    length: u32
+    pub id: u32,
+    pub length: u32
 }
 
 impl NXAudioData {
@@ -310,12 +309,12 @@ impl NXFile {
         Ok(())
     }
 
-    pub fn get_node_children(&self, node: &NXNode) -> Option<&[NXNode]> {
+    pub fn get_node_children(&self, node: &NXNode) -> Option<Vec<&NXNode>> {
         let start_i = node.child as usize;
         let end_i = start_i + node.n_child as usize;
 
         if end_i <= self.nodes.len() {
-            return Some(&self.nodes[start_i..end_i])
+            Some(self.nodes.get(start_i..end_i));
         }
         None
     }

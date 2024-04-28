@@ -14,6 +14,7 @@ For the meantime, i have no intention of implementing the Audio and Bitmap nodes
 ### TODO
 - [ ] Make a Better Test
 - [ ] Make a benchmark test
+- [ ] Fix and clean borrows, what a pain
 - [ ] Optimize and clean code
 - [ ] Audio Nodes
 - [ ] Bitmap nodes
