@@ -3,8 +3,9 @@ name = "rustNX"
 version = "0.1.0"
 edition = "2021"
 authors = ["not-ebx"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A NX-type file reader, for mushroom game. Implements the PKNX4 format"
+repository = "https://github.com/not-ebx/rustNX"
+license = "MIT"
 
 [dependencies]
 byteorder = "1.5.0"
