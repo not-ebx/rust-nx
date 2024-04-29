@@ -3,117 +3,11 @@ use std::fs::File;
 use std::io::{BufReader, Error, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
-use crate::nx_file::NXNodeType::{AUDIO, BITMAP, DOUBLE, INT64, NONE, STRING, VECTOR};
+use crate::nx_node::NXNodeType::{AUDIO, BITMAP, DOUBLE, INT64, NONE, STRING, VECTOR};
+use crate::nx_node::{NXAudioData, NXBitmapData, NXNode, NXNodeData, NXNodeType, NXVectorData};
 
 const MAGIC_BYTES: &str = "PKG4";
 
-#[derive(Clone, Copy)]
-pub enum NXNodeType {
-    NONE,
-    INT64, // 64 bit signed int
-    DOUBLE, // 64 bit double
-    STRING, // 32 bit uint string; Length = u16, string u8[]
-    VECTOR, //
-    BITMAP, //
-    AUDIO //
-}
-
-pub enum NXNodeData {
-    String(String),
-    Bitmap(NXBitmapData),
-    Audio(NXAudioData),
-    Int64(i64),
-    Double(f64),
-    Vector(NXVectorData),
-    None
-}
-
-impl NXNodeData {
-
-}
-
-impl From<u16> for NXNodeType {
-    fn from(item: u16) -> Self {
-        match item {
-            0 => NONE,
-            1 => INT64,
-            2 => DOUBLE,
-            3 => STRING,
-            4 => VECTOR,
-            5 => BITMAP,
-            6 => AUDIO,
-            _ => NONE
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct NXVectorData {
-    pub x: i32,
-    pub y: i32
-}
-
-impl NXVectorData {
-    pub fn new(data: &[u8; 8]) -> Self {
-        let data_x = &data[0..4];
-        let data_y = &data[4..];
-
-        NXVectorData {
-            x: LittleEndian::read_i32(data_x),
-            y: LittleEndian::read_i32(data_y)
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct NXBitmapData {
-    pub id: u32,
-    pub width: u16,
-    pub height: u16
-}
-
-
-impl NXBitmapData {
-    pub fn new(data: &[u8; 8]) -> Self {
-        NXBitmapData {
-            id: LittleEndian::read_u32(&data[0..4]),
-            width: LittleEndian::read_u16(&data[4..6]),
-            height: LittleEndian::read_u16(&data[6..]),
-        }
-    }
-}
-
-
-#[derive(Debug)]
-pub struct NXAudioData {
-    pub id: u32,
-    pub length: u32
-}
-
-impl NXAudioData {
-    pub fn new(data: &[u8; 8]) -> Self {
-        NXAudioData {
-            id: LittleEndian::read_u32(&data[0..4]),
-            length: LittleEndian::read_u32(&data[4..]),
-        }
-    }
-}
-
-pub struct NXNode {
-    name_id: u32, // String ID
-    pub name: String,
-    pub child: u32, // Node ID of first child
-    pub n_child: u16, // amount of child
-    ntype: NXNodeType,
-    pub data: NXNodeData,
-}
-
-
-impl NXNode {
-    pub fn has_children(&self) -> bool {
-        self.n_child > 0
-    }
-}
 
 
 pub struct NXFileHeader {
@@ -309,14 +203,14 @@ impl NXFile {
         Ok(())
     }
 
-    pub fn get_node_children(&self, node: &NXNode) -> Option<Vec<&NXNode>> {
-        let start_i = node.child as usize;
-        let end_i = start_i + node.n_child as usize;
-
-        if end_i <= self.nodes.len() {
-            Some(self.nodes.get(start_i..end_i));
+    pub fn get_node_children(&self, node: &NXNode) -> Vec<&NXNode> {
+        if node.has_children() {
+            let start_i = node.child as usize;
+            let end_i = start_i + node.n_child as usize;
+            self.nodes[start_i..end_i].iter().collect()
+        } else {
+            vec![]
         }
-        None
     }
 
     pub fn resolve(&self, full_path: &str) -> Option<&NXNode> {
@@ -328,7 +222,7 @@ impl NXFile {
         let mut current_node : &NXNode = &self.nodes[0];
         // Search for the first one
         for (_, path) in node_path.iter().enumerate() {
-            let node_cursor = self.get_node_children(current_node)?;
+            let node_cursor = self.get_node_children(current_node);
             let node_result = node_cursor.iter().find(
                 |&x| x.name.eq(path)
             );
