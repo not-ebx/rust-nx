@@ -34,3 +34,7 @@ for nodes in map_nx.get_node_children(map0).iter() {
 - [ ] Optimize and clean code
 - [ ] Audio Nodes (With data)
 - [ ] Bitmap nodes (With Data)
+
+### Credits
+- PKNX4 Format specification, found at https://nxformat.github.io/
+- aatxe's pkgnx's implementation, helped me understand some stuff i didnt quite get from the format definition. Found https://github.com/aatxe/pkgnx
