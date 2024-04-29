@@ -6,8 +6,8 @@ A rust implementation of a [PKNX4](https://nxformat.github.io/) format reader.
 - [x] String Nodes
 - [x] Long and Double
 - [x] Vectors node
-- [ ] Audio Nodes
-- [ ] Bitmap nodes
+- [x] Audio Nodes (Without data, just the info)
+- [x] Bitmap nodes (Without data, just the info)
 
 For the meantime, i have no intention of implementing the Audio and Bitmap nodes, since there's no use for them when developing a server. Maybe ill add them.... who knows.
 
@@ -16,5 +16,5 @@ For the meantime, i have no intention of implementing the Audio and Bitmap nodes
 - [ ] Make a Better Test
 - [ ] Make a benchmark test
 - [ ] Optimize and clean code
-- [ ] Audio Nodes
-- [ ] Bitmap nodes
+- [ ] Audio Nodes (With data)
+- [ ] Bitmap nodes (With Data)
