@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufReader, Error, Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
-use crate::nx_node::NXNodeType::{AUDIO, BITMAP, DOUBLE, INT64, NONE, STRING, VECTOR};
+use crate::nx_node::NXNodeType::{Audio, Bitmap, Double, Long, Text, Vector};
 use crate::nx_node::{NXAudioData, NXBitmapData, NXNode, NXNodeData, NXNodeType, NXVectorData};
 
 const MAGIC_BYTES: &str = "PKG4";
@@ -100,12 +100,12 @@ impl NXFile {
 
     fn create_node_data(&self, ntype: NXNodeType, data: [u8; 8]) -> NXNodeData {
         match ntype {
-            INT64 => {NXNodeData::Int64(LittleEndian::read_i64(&data))},
-            DOUBLE => {NXNodeData::Double(LittleEndian::read_f64(&data))},
-            STRING => {NXNodeData::String(self.get_string(LittleEndian::read_u32(&data)))},
-            VECTOR => {NXNodeData::Vector(NXVectorData::new(&data))},
-            BITMAP => {NXNodeData::Bitmap(NXBitmapData::new(&data))},
-            AUDIO => {NXNodeData::Audio(NXAudioData::new(&data))},
+            Long => {NXNodeData::Int64(LittleEndian::read_i64(&data))},
+            Double => {NXNodeData::Double(LittleEndian::read_f64(&data))},
+            Text => {NXNodeData::String(self.get_string(LittleEndian::read_u32(&data)))},
+            Vector => {NXNodeData::Vector(NXVectorData::new(&data))},
+            Bitmap => {NXNodeData::Bitmap(NXBitmapData::new(&data))},
+            Audio => {NXNodeData::Audio(NXAudioData::new(&data))},
             _ => { NXNodeData::None}
         }
     }
@@ -214,14 +214,11 @@ impl NXFile {
     }
 
     pub fn resolve(&self, full_path: &str) -> Option<&NXNode> {
-        let node_path: Vec<&str> = full_path.split("/").collect();
-        if node_path.len() <= 0 {
-            return None
-        }
+        let node_path: Vec<&str> = full_path.split('/').collect();
 
         let mut current_node : &NXNode = &self.nodes[0];
         // Search for the first one
-        for (_, path) in node_path.iter().enumerate() {
+        for  path in node_path.iter() {
             let node_cursor = self.get_node_children(current_node);
             let node_result = node_cursor.iter().find(
                 |&x| x.name.eq(path)

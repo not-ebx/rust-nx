@@ -2,13 +2,13 @@ use byteorder::{ByteOrder, LittleEndian};
 
 #[derive(Clone, Copy)]
 pub enum NXNodeType {
-    NONE,
-    INT64, // 64 bit signed int
-    DOUBLE, // 64 bit double
-    STRING, // 32 bit uint string; Length = u16, string u8[]
-    VECTOR, //
-    BITMAP, //
-    AUDIO //
+    Empty,
+    Long, // 64 bit signed int
+    Double, // 64 bit double
+    Text, // 32 bit uint string; Length = u16, string u8[]
+    Vector, //
+    Bitmap, //
+    Audio //
 }
 
 #[derive(Clone)]
@@ -25,14 +25,14 @@ pub enum NXNodeData {
 impl From<u16> for NXNodeType {
     fn from(item: u16) -> Self {
         match item {
-            0 => NXNodeType::NONE,
-            1 => NXNodeType::INT64,
-            2 => NXNodeType::DOUBLE,
-            3 => NXNodeType::STRING,
-            4 => NXNodeType::VECTOR,
-            5 => NXNodeType::BITMAP,
-            6 => NXNodeType::AUDIO,
-            _ => NXNodeType::NONE
+            0 => NXNodeType::Empty,
+            1 => NXNodeType::Long,
+            2 => NXNodeType::Double,
+            3 => NXNodeType::Text,
+            4 => NXNodeType::Vector,
+            5 => NXNodeType::Bitmap,
+            6 => NXNodeType::Audio,
+            _ => NXNodeType::Empty
         }
     }
 }
