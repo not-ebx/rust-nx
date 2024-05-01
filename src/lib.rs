@@ -1,5 +1,5 @@
-mod nx_file;
-mod nx_node;
+pub mod nx_file;
+pub mod nx_node;
 
 
 #[cfg(test)]

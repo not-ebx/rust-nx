@@ -8,8 +8,6 @@ use crate::nx_node::{NXAudioData, NXBitmapData, NXNode, NXNodeData, NXNodeType, 
 
 const MAGIC_BYTES: &str = "PKG4";
 
-
-
 pub struct NXFileHeader {
     magic : u32,
     node_count: u32,
@@ -46,7 +44,6 @@ impl NXFile {
         // Check magic bytes
         let mut magic_bytes_arr: [u8;4] = [0,0,0,0];
         file_reader.read_exact(&mut magic_bytes_arr)?;
-        //let magic_bytes_arr = file_reader.read_u32::<LittleEndian>()?.to_le_bytes();
 
         // Check the magic bytes
         let str_magic = std::str::from_utf8(&magic_bytes_arr).map_err(
