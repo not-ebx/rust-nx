@@ -22,6 +22,48 @@ pub enum NXNodeData {
     None
 }
 
+impl Into<[i32;2]> for NXNodeData {
+    fn into(self) -> [i32; 2] {
+        match self {
+            NXNodeData::Vector(vector) => [vector.x, vector.y],
+            _ => panic!("NXNodeData variant is not a Vector"),
+        }
+    }
+}
+
+impl Into<String> for NXNodeData {
+    fn into(self) -> String {
+        match self {
+            NXNodeData::Double(num) => num.to_string(),
+            NXNodeData::Int64(num) => num.to_string(),
+            NXNodeData::String(s) => s,
+            _ => panic!("NXNodeData variant is not a String"),
+        }
+    }
+}
+
+impl Into<i64> for NXNodeData {
+    fn into(self) -> i64 {
+        match self {
+            NXNodeData::Double(num) => num as i64,
+            NXNodeData::String(s) => s.parse::<i64>().expect("is not a valid number!!"),
+            NXNodeData::Int64(i) => i,
+            _ => panic!("NXNodeData variant is not an Int64"),
+        }
+    }
+}
+
+impl Into<f64> for NXNodeData {
+    fn into(self) -> f64 {
+        match self {
+            NXNodeData::Double(d) => d,
+            NXNodeData::Int64(i) => i as f64,
+            NXNodeData::String(s) => s.parse::<f64>().expect("is not a valid number!!"),
+            _ => panic!("NXNodeData variant is not a Double"),
+        }
+    }
+}
+
 impl From<u16> for NXNodeType {
     fn from(item: u16) -> Self {
         match item {
