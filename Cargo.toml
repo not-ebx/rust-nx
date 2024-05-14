@@ -1,6 +1,6 @@
 [package]
 name = "rust_nx"
-version = "0.1.2"
+version = "0.1.4"
 edition = "2021"
 authors = ["not-ebx"]
 description = "A NX-type file reader, for mushroom game. Implements the PKNX4 format"
