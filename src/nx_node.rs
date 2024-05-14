@@ -1,3 +1,4 @@
+use std::num::ParseFloatError;
 use byteorder::{ByteOrder, LittleEndian};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -49,6 +50,41 @@ impl Into<i64> for NXNodeData {
             NXNodeData::String(s) => s.parse::<i64>().expect("is not a valid number!!"),
             NXNodeData::Int64(i) => i,
             _ => panic!("NXNodeData variant is not an Int64"),
+        }
+    }
+}
+
+impl Into<i32> for NXNodeData {
+    fn into(self) -> i32 {
+        let as_long: i64 = self.into();
+        as_long as i32
+    }
+}
+
+impl Into<i16> for NXNodeData {
+    fn into(self) -> i16 {
+        let as_long: i64 = self.into();
+        as_long as i16
+    }
+}
+
+impl Into<u8> for NXNodeData {
+    fn into(self) -> u8 {
+        let as_long: i64 = self.into();
+        as_long as u8
+    }
+}
+
+impl Into<bool> for NXNodeData {
+    fn into(self) -> bool {
+        let as_string: String = self.into();
+        match as_string.parse::<f64>() {
+            Ok(num) => {
+                num > 0.0
+            }
+            Err(_) => {
+                as_string.eq("true")
+            }
         }
     }
 }
