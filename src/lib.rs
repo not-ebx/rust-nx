@@ -4,8 +4,9 @@ pub mod nx_node;
 
 #[cfg(test)]
 mod tests {
+    use std::process::abort;
     use crate::nx_file::{NXFile};
-    use crate::nx_node::{NXNodeData};
+    use crate::nx_node::{NXNodeData, NXNodeType};
     #[derive(Default)]
     struct MapleMap {
         id: i64,
@@ -60,6 +61,25 @@ mod tests {
             found_maps.push(new_map);
         }
         assert_eq!(found_maps.len(), 25);
+    }
+
+    #[test]
+    fn load_child_by_string() {
+        let map_nx = NXFile::new("./nx_files/Map.nx").unwrap();
+        let root_node = map_nx.get_root();
+        match root_node {
+            None => {
+                abort(); // Test failed
+            }
+            Some(node) => {
+                if let Some(test_node) = map_nx.get_node_child(node, "Map"){
+                    print!("Found node 'Map'");
+                    assert!(test_node.ntype == NXNodeType::Empty)
+                } else {
+                    abort();
+                }
+            }
+        }
     }
 
 }

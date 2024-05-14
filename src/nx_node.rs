@@ -1,6 +1,6 @@
 use byteorder::{ByteOrder, LittleEndian};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum NXNodeType {
     Empty,
     Long, // 64 bit signed int

@@ -210,12 +210,24 @@ impl NXFile {
         }
     }
 
+    pub fn get_node_child(&self, node: &NXNode, child_name: &str) -> Option<&NXNode> {
+        let child = self.get_node_children(node).into_iter().find(|&x| x.name.eq(child_name));
+        match child {
+            None => {
+                None
+            }
+            Some(child_ref) => {
+                Some(child_ref)
+            }
+        }
+    }
+
     pub fn resolve(&self, full_path: &str) -> Option<&NXNode> {
         let node_path: Vec<&str> = full_path.split('/').collect();
 
         let mut current_node : &NXNode = &self.nodes[0];
         // Search for the first one
-        for  path in node_path.iter() {
+        for path in node_path.iter() {
             let node_cursor = self.get_node_children(current_node);
             let node_result = node_cursor.iter().find(
                 |&x| x.name.eq(path)
@@ -230,5 +242,13 @@ impl NXFile {
             }
         }
         Some(current_node)
+    }
+
+    pub fn get_root(&self) -> Option<&NXNode> {
+        if self.nodes.len() > 0 {
+            Some(&self.nodes[0])
+        } else {
+            None
+        }
     }
 }
