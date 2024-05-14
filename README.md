@@ -27,6 +27,12 @@ for nodes in map_nx.get_node_children(map0).iter() {
 }
 ```
 
+Or you can get a single child by doing
+```rust
+map_nx.get_node_child(map0, "child_name");
+```
+This returns an Option<&NXNode>
+
 ### TODO
 - [x] Fix and clean borrows, what a pain
 - [ ] Make a Better Test
