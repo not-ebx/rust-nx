@@ -80,7 +80,7 @@ impl Into<bool> for NXNodeData {
         let as_string: String = self.into();
         match as_string.parse::<f64>() {
             Ok(num) => {
-                num > 0.0
+                num != 0.0
             }
             Err(_) => {
                 as_string.eq("true")

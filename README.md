@@ -11,6 +11,14 @@ A rust implementation of a [PKNX4](https://nxformat.github.io/) format reader.
 
 For the meantime, i have no intention of implementing the Audio and Bitmap nodes, since there's no use for them when developing a server. Maybe ill add them.... who knows.
 
+### Installation
+To use on your project, you must include it as such, inside your Cargo.toml
+```toml
+[dependencies]
+rust_nx = { git = "https://github.com/not-ebx/rust-nx", tag = "v0.1.4" }
+```
+The tag can change and I may forget to update the readme with the latest version. You can always check the latest tag by clicking on the releases.
+
 ### Usage
 Using this is pretty simple. There's an example on src/lib.rs.
 But essentially it's:
